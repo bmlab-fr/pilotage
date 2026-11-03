@@ -201,7 +201,7 @@ Attendu : `envoyé : {'enregistres': …}` ; dans l'application, accueil : ligne
 ## F. Surveillance externe (comptes du propriétaire)
 
 - **Healthchecks.io** (compte existant) : créer deux contrôles, « Pilotage contrôles de la nuit » (période 1 jour, grâce 2 heures) et « Pilotage e-mail du matin » (période 1 jour, grâce 2 heures). Adresse du premier dans `/etc/pilotage/healthchecks-controles` (`echo 'https://hc-ping.com/…' | sudo tee /etc/pilotage/healthchecks-controles`) ; adresse du second dans l'application, Réglages > Surveillance et gel.
-- **UptimeRobot** (compte existant, déjà psv) : ajouter une sonde HTTPS par site manquant : pilotage, courses, jardin, immat, hameau-ecrins-405.
+- **UptimeRobot** (compte existant, déjà psv) : ajouter une sonde HTTPS par site manquant : pilotage, courses, jardin, immat, hameau-ecrins-405, pieces-euro (7 sondes en tout).
 - **Commune** pour l'alerte de gel : Réglages > Surveillance et gel.
 
 # Étape 3 : agenda abonné et sauvegarde du PC (CDC 3.5 et 5.1)
