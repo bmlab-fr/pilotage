@@ -1,6 +1,7 @@
 // Onglet « Fiches » (#/fiches, CDC 3.6) : toutes les fiches, avec ou sans
 // échéance, rangées par domaine, avec une recherche par mot (sans tenir
-// compte des accents ni des majuscules). Boutons de création : tâche avec
+// compte des accents ni des majuscules), y compris dans le texte et les
+// commandes des étapes de procédure. Boutons de création : tâche avec
 // échéance, ou fiche de référence (sans échéance ni rappel).
 (function () {
   "use strict";
@@ -40,9 +41,11 @@
     zone.appendChild(contenu);
 
     var toutes = [];
+    var procedures = {}; // id de la tâche → texte simplifié de ses étapes
     function dessiner() {
       O.vider(contenu);
       var mots = simplifier(recherche.value).split(/\s+/).filter(Boolean);
+      var dansProcedure = {};
       var garde = choixF.value ? O.descendants(choixF.value) : null;
       var liste = toutes.filter(function (t) {
         if (garde && !garde[t.domaine]) return false;
@@ -52,7 +55,11 @@
         if (!genre.value && t.etat === "terminee") return false;
         if (!mots.length) return true;
         var texte = simplifier([t.titre, t.notes, t.materiel, t.contacts, t.condition, t.preparation, O.nomDomaine(t.domaine)].join(" "));
-        return mots.every(function (m) { return texte.indexOf(m) >= 0; });
+        if (mots.every(function (m) { return texte.indexOf(m) >= 0; })) return true;
+        var tout = texte + " " + (procedures[t.id] || "");
+        if (!mots.every(function (m) { return tout.indexOf(m) >= 0; })) return false;
+        dansProcedure[t.id] = true;
+        return true;
       });
       if (!liste.length) {
         contenu.appendChild(el("p", { classe: "discret", texte: mots.length ? "Aucune fiche ne contient ces mots." : "Aucune fiche ici." }));
@@ -71,7 +78,8 @@
         contenu.appendChild(el("ul", { classe: "liste" }, ici.map(function (t) {
           var pastille = t.mode === "reference" ? "📘" : O.PASTILLE[t.priorite];
           return el("li", {}, [el("a", { href: "#/tache/" + t.id }, [
-            el("span", { classe: "ligne-gauche" }, [el("strong", { texte: pastille + " " + t.titre })]),
+            el("span", { classe: "ligne-gauche" }, [el("strong", { texte: pastille + " " + t.titre })].concat(
+              dansProcedure[t.id] ? [el("br"), el("span", { classe: "discret", texte: "trouvé dans la procédure" })] : [])),
             el("span", { classe: "ligne-droite" }, [el("span", { texte: etatCourt(t, auj) })]),
           ])]);
         })));
@@ -88,8 +96,14 @@
       dessiner();
     });
     genre.addEventListener("change", dessiner);
-    O.taches(true).then(function (l) {
-      toutes = l;
+    // Les étapes ne servent qu'à la recherche : si elles ne se chargent pas,
+    // la recherche reste possible sur les fiches seules.
+    var etapes = Api.tout("etapes", { fields: "tache,texte,commande", sort: "ordre,created" }).then(null, function () { return []; });
+    Promise.all([O.taches(true), etapes]).then(function (r) {
+      toutes = r[0];
+      r[1].forEach(function (x) {
+        procedures[x.tache] = (procedures[x.tache] || "") + " " + simplifier(x.texte + " " + x.commande);
+      });
       dessiner();
     }, function (e) {
       O.vider(contenu);
