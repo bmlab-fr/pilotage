@@ -225,6 +225,7 @@ details.bloc summary { cursor: pointer; color: var(--accent); font-weight: 600; 
 .vignette .retirer { position: absolute; top: 4px; right: 4px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, .65); color: #fff; font-size: 1rem; cursor: pointer; }
 video { width: 100%; max-height: 60vh; border-radius: 10px; background: #000; margin: 6px 0; }
 .lien-externe { display: block; margin: 6px 0; color: var(--accent); word-break: break-all; }
+.lien-fiche { display: block; margin-top: 8px; padding: 8px 0 2px; border-top: 1px solid var(--bord); color: var(--accent); font-weight: 600; text-decoration: none; }
 .carte-etape .ordre { display: flex; gap: 6px; }
 .pied-etape { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
 .etat-enregistrement { font-size: .82rem; color: var(--discret); }

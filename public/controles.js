@@ -1,6 +1,8 @@
 // Écran « Contrôles de la nuit » (#/controles?nuit=AAAA-MM-JJ, CDC 5.3) :
 // comptes rendus en clair de chaque contrôle, les plus graves d'abord, et la
 // liste des 14 dernières nuits. Lecture seule : seul le serveur les écrit.
+// Chaque compte rendu mène à sa fiche : la tâche « Réparer : … » ouverte par
+// une alerte, sinon la fiche de procédure qui correspond au contrôle.
 (function () {
   "use strict";
 
@@ -8,6 +10,34 @@
   var el = O.el;
   var STATUT = { ok: "✅", info: "ℹ️", attention: "🟠", alerte: "🔴" };
   var RANG = { alerte: 0, attention: 1, info: 2, ok: 3 };
+
+  // Contrôle (code) → morceau du titre de la fiche de procédure. Le titre
+  // est libre (le propriétaire peut le changer) : à défaut, pas de lien.
+  var FICHES = [
+    [/^certificats$/, "certificat"],
+    [/^(version-|caddy-bloque$)/, "Montée de version"],
+    [/^(securite|securite-attente|mises-a-jour|redemarrage)$/, "Mises à jour du système"],
+    [/^disque$/, "Agrandir le disque du serveur"],
+    [/^sauvegarde-pc$/, "Test de restauration de la sauvegarde du PC"],
+    [/^sauvegarde-immat$/, "sort d'Immatriculation"],
+    [/^sauvegarde-/, "Test de restauration d'une sauvegarde"],
+  ];
+
+  function simplifier(t) {
+    return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  }
+
+  // Fiche liée à un compte rendu : { tache, texte } ou null.
+  function ficheLiee(c, taches) {
+    var ouvertes = taches.filter(function (t) { return t.etat !== "terminee"; });
+    var rep = ouvertes.filter(function (t) { return t.origine === "controle:" + c.cle; })[0];
+    if (rep) return { tache: rep, texte: "🔧 Tâche de réparation : " + rep.titre };
+    var regle = FICHES.filter(function (f) { return f[0].test(c.cle); })[0];
+    if (!regle) return null;
+    var mot = simplifier(regle[1]);
+    var t = ouvertes.filter(function (x) { return simplifier(x.titre).indexOf(mot) >= 0 && x.titre.indexOf("Ramonage") < 0; })[0];
+    return t ? { tache: t, texte: "📋 Fiche : " + t.titre } : null;
+  }
 
   // Résumé d'une nuit, en une ligne (accueil et liste des nuits).
   function resume(liste) {
@@ -23,7 +53,10 @@
     var debut = E.ajouterJours(auj, -13);
     var contenu = el("div", {}, [O.attente()]);
     zone.appendChild(contenu);
-    Api.tout("controles", { filter: "nuit >= " + Api.texteFiltre(debut), sort: "-nuit" }, 1500).then(function (l) {
+    // Les fiches ne servent qu'aux liens : sans elles, l'écran reste lisible.
+    var taches = O.taches(true).then(null, function () { return []; });
+    Promise.all([Api.tout("controles", { filter: "nuit >= " + Api.texteFiltre(debut), sort: "-nuit" }, 1500), taches]).then(function (r) {
+      var l = r[0];
       O.vider(contenu);
       var parNuit = {};
       l.forEach(function (c) { (parNuit[c.nuit] = parNuit[c.nuit] || []).push(c); });
@@ -37,10 +70,11 @@
       contenu.appendChild(el("h2", { texte: "Nuit du " + O.dateLongue(choisie).replace(/^[a-zé]+ /, "") }));
       contenu.appendChild(el("p", { classe: "discret", texte: resume(liste) + (choisie !== auj ? " (ce n'est pas la nuit dernière)" : "") }));
       liste.forEach(function (c) {
+        var f = ficheLiee(c, r[1]);
         contenu.appendChild(el("section", { classe: "carte controle " + c.statut }, [
           el("h3", { texte: STATUT[c.statut] + " " + c.titre }),
           el("p", { classe: "texte-libre", texte: c.texte }),
-        ]));
+        ].concat(f ? [el("a", { classe: "lien-fiche", href: "#/tache/" + f.tache.id, texte: f.texte + " ›" })] : [])));
       });
       var autres = el("ul", { classe: "liste" });
       for (var i = 0; i < 14; i++) {
