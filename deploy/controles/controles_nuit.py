@@ -48,6 +48,7 @@ SITES = [
     ("pilotage.bmlab.fr", "Pilotage"),
     ("jardin.bmlab.fr", "Jardin"),
     ("pieces-euro.bmlab.fr", "Pièces euro"),
+    ("journal.bmlab.fr", "Journal"),
 ]
 
 # clé, nom, dossier des sauvegardes PocketBase, état de la copie Shadow Drive
@@ -57,6 +58,7 @@ SAUVEGARDES = [
     ("pilotage", "Pilotage", "/opt/pocketbase-pilotage/pb_data/backups", "/var/lib/sauvegarde-pilotage/etat"),
     ("jardin", "Jardin", "/opt/pocketbase-jardin/pb_data/backups", "/var/lib/sauvegarde-jardin/etat"),
     ("pieces", "Pièces euro", "/opt/pocketbase-pieces/pb_data/backups", "/var/lib/sauvegarde-pieces/etat"),
+    ("journal", "Journal", "/opt/pocketbase-journal/pb_data/backups", "/var/lib/sauvegarde-journal/etat"),
 ]
 
 # robots lancés par un minuteur systemd (service sans [Install], donc absent
