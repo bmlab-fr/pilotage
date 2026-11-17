@@ -138,6 +138,32 @@ Pages : `scp` des fichiers de `public\` changés vers `/tmp/`, puis `sudo mv /tm
 Si `echeances.js` change : le copier **aussi** dans `/opt/pocketbase-pilotage/pb_hooks/`, puis `sudo systemctl restart pocketbase-pilotage`.
 Règles du serveur (`pb_hooks`) ou migrations : `sudo mv` dans le bon dossier, `sudo chown pocketbase-pilotage:pocketbase-pilotage …`, puis `sudo systemctl restart pocketbase-pilotage`.
 
+## 9. Mot de passe oublié (secours)
+
+Il n'y a volontairement **aucun lien « Mot de passe oublié »** dans l'application, et Caddy refuse les routes de réinitialisation, de vérification et de changement d'adresse par e-mail (CDC Pilotage, version 0.36). On reprend la main par le serveur, avec le tunnel SSH : **aucune donnée n'est perdue**.
+
+### Mot de passe d'un compte de l'application oublié (le compte du propriétaire)
+
+1. PC, nouvelle fenêtre PowerShell, laisser tourner :
+```
+ssh -L 8095:127.0.0.1:8095 bmlab
+```
+2. Navigateur du PC : `http://127.0.0.1:8095/_/`, connexion avec le compte superuser.
+3. **Collections > users >** le compte concerné **>** cocher **Change password**, saisir deux fois le nouveau mot de passe (gestionnaire de mots de passe), **Save changes**.
+4. Se reconnecter dans l'application avec le nouveau mot de passe, puis fermer la fenêtre du tunnel.
+
+**Code par e-mail** : après le nouveau mot de passe, l'application demande toujours le code envoyé par e-mail. Si la messagerie `contact@bmlab.fr` est elle-même inaccessible : console, **Collections > users >** roue dentée **> Options > Multi-factor authentication**, décocher, **Save changes** ; se connecter ; puis **recocher aussitôt** et enregistrer.
+
+### Mot de passe du superuser oublié
+
+Sur le serveur (`ssh bmlab`), une seule commande. Le nouveau mot de passe est demandé **sans s'afficher** et n'est jamais écrit dans la ligne de commande : il ne reste ni dans l'historique ni dans le journal de `sudo`. Remplacer `ADRESSE_EMAIL_DU_SUPERUSER` par l'adresse du superuser (gestionnaire de mots de passe) :
+```
+sudo -u pocketbase-pilotage bash -c 'read -r -s -p "Nouveau mot de passe du superuser : " P; echo; /opt/pocketbase-pilotage/pocketbase superuser upsert "$1" "$P" --dir=/opt/pocketbase-pilotage/pb_data' _ ADRESSE_EMAIL_DU_SUPERUSER
+```
+`sudo` demande d'abord le mot de passe du compte `bmlab`, puis vient la question du nouveau mot de passe. Attendu : un message de réussite (« Successfully saved superuser … »). Pas besoin de redémarrer pocketbase-pilotage. Se connecter ensuite à la console par le tunnel pour vérifier.
+
+Adresse du superuser oubliée elle aussi : la même commande avec une nouvelle adresse crée un second superuser ; dans la console, **Collections > _superusers** (collections système), supprimer l'ancien.
+
 # Étape 2 : contrôles de la nuit (CDC chapitre 5)
 
 ## A. Fichiers (PC)

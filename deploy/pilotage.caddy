@@ -37,7 +37,11 @@ pilotage.bmlab.fr {
         # du serveur l'appelle directement sur 127.0.0.1:8095.
         @api {
             path /api/health /api/collections/* /api/files/* /api/pilotage/*
+            # Réinitialisation, vérification et changement d'adresse par e-mail
+            # fermés (17/11/2026) : aucun parcours « mot de passe oublié » par
+            # e-mail ; secours par la console (tunnel SSH), voir INSTALLATION.md.
             not path /api/collections/_superusers/* /api/pilotage/controles
+            not path */request-password-reset */confirm-password-reset */request-verification */confirm-verification */request-email-change */confirm-email-change
         }
         reverse_proxy @api 127.0.0.1:8095
 
